@@ -67,6 +67,8 @@ def run_game():
     greenyText = Text(ai_settings, screen, "= 40 PTS     GREENY", 200, 40, ai_settings.screen_width / 2, 290, (255, 255, 255))
     oscarPicture = Picture(ai_settings, screen, ai_settings.screen_width / 2 - 75, 340, pygame.image.load('images/oscar.png'))
     oscarText = Text(ai_settings, screen, "= ???           OSCAR", 200, 40, ai_settings.screen_width / 2, 340, (255, 255, 255))
+    list = None
+    animation_clock = ai_settings.animation_clock
 
     while True:
         highscoreText = Text(ai_settings, screen, "HIGH SCORE: " + str(stats.high_score), 200, 40, ai_settings.screen_width / 2 - 100, 40, (255, 255, 255))
@@ -82,9 +84,11 @@ def run_game():
             if stats.game_active:
                 ship.update()
                 gf.update_barriers(ai_settings, screen, barriers, aliens, ship)
-                gf.update_bullets(ai_settings, screen, stats, sb, ship, aliens, bullets, bullets2, ufo)
+                temp = gf.update_bullets(ai_settings, screen, stats, sb, ship, aliens, bullets, bullets2, ufo)
+                if temp is not None:
+                    list = temp
                 gf.update_aliens(ai_settings, stats, screen, sb, ship, aliens, bullets, bullets2, ufo)
 
-            gf.update_screen(ai_settings, screen, stats, sb, ship, aliens, bullets, play_button, bullets2, ufo, barriers)
+            animation_clock = gf.update_screen(ai_settings, screen, stats, sb, ship, aliens, bullets, play_button, bullets2, ufo, barriers, list, animation_clock)
 
 run_game()

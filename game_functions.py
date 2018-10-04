@@ -136,7 +136,9 @@ def update_bullets(ai_settings, screen, stats, sb, ship, aliens, bullets, bullet
         if bullet2.rect.colliderect(ship.rect):
             ship_hit(ai_settings, stats, screen, sb, ship, aliens, bullets, bullets2, ufo)
 
-    check_bullet_alien_collisions(ai_settings, screen, stats, sb, ship, aliens, bullets, bullets2, ufo)
+    list = check_bullet_alien_collisions(ai_settings, screen, stats, sb, ship, aliens, bullets, bullets2, ufo)
+    if list is not None:
+        return list
 
 def check_bullet_alien_collisions(ai_settings, screen, stats, sb, ship, aliens, bullets, bullets2, ufo):
     """Respond to bullet-alien collisions."""
@@ -163,12 +165,14 @@ def check_bullet_alien_collisions(ai_settings, screen, stats, sb, ship, aliens, 
                     sb.prep_score()
         if bullet.rect.colliderect(ufo.rect):
             pygame.mixer.Sound('audio/invaderkilled.wav').play()
+
+            points_scored = (ai_settings.ufo_points * random.randint(1,5))
+            pointsText = Text(ai_settings, screen, str(points_scored), 40, 40, ufo.rect.centerx, ufo.rect.centery, (255, 255, 255))
+            pointsTextOn = True
             ufo.reset()
-            points_scored += ai_settings.ufo_points * random.randint(1,5)
-            #pointsText = Text(ai_settings, screen, str(points_scored), ufo.rect.centerx, ufo.rect.centery, ufo.rect.width, ufo.rect.height, (255, 255, 255))
-            #pointsTextOn = True
             stats.score += points_scored
             sb.prep_score()
+            return [pointsTextOn, pointsText]
 
     check_high_score(stats, sb)
     collisions = pygame.sprite.groupcollide(bullets, aliens, True, True)
@@ -311,7 +315,7 @@ def update_aliens(ai_settings, stats, screen, sb, ship, aliens, bullets, bullets
             if rint == 0:
                 fire_bullet2(ai_settings, screen, alien, bullets2)
 
-    rint = random.randint(0,6000)
+    rint = random.randint(0,600)
     if rint == 0 and ufo.ufo_active == False:
         ufo.ufo_active = True
 
@@ -327,7 +331,7 @@ def update_aliens(ai_settings, stats, screen, sb, ship, aliens, bullets, bullets
 def update_barriers(ai_settings, screen, barriers, aliens, ship):
     barriers.update()
 
-def update_screen(ai_settings, screen, stats, sb, ship, aliens, bullets, play_button, bullets2, ufo, barriers):
+def update_screen(ai_settings, screen, stats, sb, ship, aliens, bullets, play_button, bullets2, ufo, barriers, list1, animation_clock):
     """Update images on the screen and flip to the new screen"""
     # Rewdraw the screen during each pass through the loop.
     screen.fill(ai_settings.bg_color)
@@ -344,6 +348,16 @@ def update_screen(ai_settings, screen, stats, sb, ship, aliens, bullets, play_bu
     for bullet2 in bullets2.sprites():
         bullet2.draw_bullet2()
 
+    # list1[0] is boolean for ufo point animation, list[1] is text and rect information for ufo point animation
+    if isinstance(list1, list):
+        if list1[0] == True:
+            list1[1].draw_text()
+            animation_clock -= 1
+
+    if animation_clock <= 0:
+        list1[0] = False
+        animation_clock = ai_settings.animation_clock
+
     # Draw the score information.
     sb.show_score()
 
@@ -354,6 +368,8 @@ def update_screen(ai_settings, screen, stats, sb, ship, aliens, bullets, play_bu
 
     # Make the most recently drawn screen visible
     pygame.display.flip()
+
+    return animation_clock
     
 def update_menu_screen(ai_settings, screen, play_button, highscore_button, spaceText, invadersText, pinkyPicture, blueyPicture, greenyPicture, oscarPicture, pinkyText, blueyText, greenyText, oscarText):
     screen.fill(ai_settings.bg_color)
