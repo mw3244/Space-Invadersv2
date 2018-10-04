@@ -1,3 +1,6 @@
+import pygame
+import math
+
 class Settings():
     """"A class to store all settings for Alien Invasion"""
 
@@ -35,6 +38,8 @@ class Settings():
         # Animation clock
         self.animation_clock = 100
 
+        self.frequency = 42050
+
         self.initialize_dynamic_settings()
 
     def initialize_dynamic_settings(self):
@@ -57,5 +62,13 @@ class Settings():
         self.ship_speed_factor *= self.speedup_scale
         self.bullet_speed_factor *= self.speedup_scale
         self.alien_speed_factor *= self.speedup_scale
+
+        pygame.mixer.quit()
+        if self.frequency < 190000:
+            self.frequency += 5000
+        pygame.mixer.init(self.frequency)
+        pygame.mixer.music.load('audio/OST.mp3')
+        pygame.mixer.music.play(-1)
+
 
         #self.alien_points = int(self.alien_points * self.score_scale)

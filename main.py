@@ -14,7 +14,7 @@ import game_functions as gf
 
 def run_game():
     # Initialize game and create a screen object.
-    frequency = 22050
+    frequency = 42050
     pygame.mixer.init(frequency)
     pygame.mixer.music.load('audio/OST.mp3')
     pygame.mixer.music.play(-1)
