@@ -8,6 +8,7 @@ from bullet import Bullet2
 from alien import Alien
 from barrier import Barrier
 from button import Text
+from button import Picture
 
 def check_events(ai_settings, screen, stats, sb, play_button, ship, aliens, bullets):
     """Respond to keypresses and mouse events."""
@@ -124,6 +125,7 @@ def update_bullets(ai_settings, screen, stats, sb, ship, aliens, bullets, bullet
     # Update bullet positions.
     bullets.update()
     bullets2.update()
+    ship_exploding = False
 
     # Get rid of bullets that have disappeared.
     for bullet in bullets.copy():
@@ -134,10 +136,11 @@ def update_bullets(ai_settings, screen, stats, sb, ship, aliens, bullets, bullet
         if bullet2.rect.top > ai_settings.screen_height:
             bullets2.remove(bullet2)
         if bullet2.rect.colliderect(ship.rect):
-            ship_hit(ai_settings, stats, screen, sb, ship, aliens, bullets, bullets2, ufo)
+            ship_exploding = ship_hit(ai_settings, stats, screen, sb, ship, aliens, bullets, bullets2, ufo)
 
     list = check_bullet_alien_collisions(ai_settings, screen, stats, sb, ship, aliens, bullets, bullets2, ufo)
-    if list is not None:
+    list.append(ship_exploding)
+    if list[0] == True or list[2] == True or list[4] == True or list[6] == True or list[8] == True:
         return list
 
 def check_bullet_alien_collisions(ai_settings, screen, stats, sb, ship, aliens, bullets, bullets2, ufo):
@@ -149,6 +152,18 @@ def check_bullet_alien_collisions(ai_settings, screen, stats, sb, ship, aliens, 
         #for aliens in collisions.values():
             #stats.score += ai_settings.greeny_points * len(aliens)
             #sb.prep_score()
+    pointsTextOn = False
+    pointsText = Text(ai_settings, screen, "", 0, 0, 0, 0, (0, 0, 0))
+
+    alienBlueDeath = False
+    alienBlueDeathPicture = Picture(ai_settings, screen, -100, -100, pygame.image.load('images/bluey_dead.png'))
+
+    alienGreenDeath = False
+    alienGreenDeathPicture = Picture(ai_settings, screen, -100, -100, pygame.image.load('images/greeny_dead.png'))
+
+    alienPinkDeath = False
+    alienPinkDeathPicture = Picture(ai_settings, screen, -100, -100, pygame.image.load('images/pinky_dead.png'))
+
 
     for bullet in bullets:
         for alien in aliens:
@@ -157,22 +172,26 @@ def check_bullet_alien_collisions(ai_settings, screen, stats, sb, ship, aliens, 
                 if alien.alienType == "green":
                     stats.score += ai_settings.greeny_points
                     sb.prep_score()
+                    alienGreenDeath = True
+                    alienGreenDeathPicture = Picture(ai_settings, screen, alien.rect.x, alien.rect.y, pygame.image.load('images/greeny_dead.png'))
                 if alien.alienType == "blue":
                     stats.score += ai_settings.bluey_points
                     sb.prep_score()
+                    alienBlueDeath = True
+                    alienBlueDeathPicture = Picture(ai_settings, screen, alien.rect.x, alien.rect.y, pygame.image.load('images/bluey_dead.png'))
                 if alien.alienType == "pink":
                     stats.score += ai_settings.pinky_points
                     sb.prep_score()
+                    alienPinkDeath = True
+                    alienPinkDeathPicture = Picture(ai_settings, screen, alien.rect.x, alien.rect.y, pygame.image.load('images/pinky_dead.png'))
         if bullet.rect.colliderect(ufo.rect):
             pygame.mixer.Sound('audio/invaderkilled.wav').play()
-
             points_scored = (ai_settings.ufo_points * random.randint(1,5))
             pointsText = Text(ai_settings, screen, str(points_scored), 40, 40, ufo.rect.centerx, ufo.rect.centery, (255, 255, 255))
             pointsTextOn = True
             ufo.reset()
             stats.score += points_scored
             sb.prep_score()
-            return [pointsTextOn, pointsText]
 
     check_high_score(stats, sb)
     collisions = pygame.sprite.groupcollide(bullets, aliens, True, True)
@@ -190,7 +209,7 @@ def check_bullet_alien_collisions(ai_settings, screen, stats, sb, ship, aliens, 
         sb.prep_level()
         create_fleet(ai_settings, screen, ship, aliens)
 
-
+    return [pointsTextOn, pointsText, alienBlueDeath, alienBlueDeathPicture, alienGreenDeath, alienGreenDeathPicture, alienPinkDeath, alienPinkDeathPicture]
 
 def check_high_score(stats, sb):
     """Check to see if there's a new high score."""
@@ -259,7 +278,7 @@ def change_fleet_direction(ai_settings, aliens):
 
 def ship_hit(ai_settings, stats, screen, sb, ship, aliens, bullets, bullets2, ufo):
     """Respond to ship being hit by alien."""
-    pygame.mixer.Sound('audio/explosion.wav').play()
+    ship_exploding = True
     if stats.ships_left > 0:
         # Decrement ships_left
         stats.ships_left -= 1
@@ -286,9 +305,12 @@ def ship_hit(ai_settings, stats, screen, sb, ship, aliens, bullets, bullets2, uf
         stats.game_active = False
         pygame.mouse.set_visible(True)
 
+    return ship_exploding
+
 def check_aliens_bottom(ai_settings, stats, screen, sb, ship, aliens, bullets, bullets2, ufo):
     """Check if any aliens have reached the bottom of the screen."""
     screen_rect = screen.get_rect()
+
     for alien in aliens.sprites():
         if alien.rect.bottom >= screen_rect.bottom:
             # Treat this the same as if the ship got hit.
@@ -315,7 +337,7 @@ def update_aliens(ai_settings, stats, screen, sb, ship, aliens, bullets, bullets
             if rint == 0:
                 fire_bullet2(ai_settings, screen, alien, bullets2)
 
-    rint = random.randint(0,600)
+    rint = random.randint(0,6000)
     if rint == 0 and ufo.ufo_active == False:
         ufo.ufo_active = True
 
@@ -341,7 +363,6 @@ def update_screen(ai_settings, screen, stats, sb, ship, aliens, bullets, play_bu
         bullet.draw_bullet()
 
     ship.blitme()
-    aliens.draw(screen)
     barriers.draw(screen)
     ufo.draw_ufo()
 
@@ -354,9 +375,91 @@ def update_screen(ai_settings, screen, stats, sb, ship, aliens, bullets, play_bu
             list1[1].draw_text()
             animation_clock -= 1
 
+    # list1[2] is boolean for blue alien death, list1[3] is the picture
+    if isinstance(list1, list):
+        if list1[2] == True:
+            list1[3].draw_picture()
+            animation_clock -= 1
+
+    # list1[4] is boolean for green alien death, list1[5] is the picture
+    if isinstance(list1, list):
+        if list1[4] == True:
+            list1[5].draw_picture()
+            animation_clock -= 1
+
+    # list1[6] is boolean for pink alien death, list1[7] is the picture
+    if isinstance(list1, list):
+        if list1[6] == True:
+            list1[7].draw_picture()
+            animation_clock -= 1
+
+    if isinstance(list1, list):
+        if list1[8] == True:
+            ship_exploding_1 = Picture(ai_settings, screen, ship.rect.x, ship.rect.y,
+                                            pygame.image.load('images/ship_death_1.png'))
+            ship_exploding_1.draw_picture()
+            pygame.display.flip()
+            pygame.mixer.Sound('audio/explosion.wav').play()
+            sleep(0.1)
+
+            ship_exploding_2 = Picture(ai_settings, screen, ship.rect.x, ship.rect.y,
+                                            pygame.image.load('images/ship_death_2.png'))
+            ship_exploding_2.draw_picture()
+            pygame.display.flip()
+            sleep(0.1)
+
+            ship_exploding_3 = Picture(ai_settings, screen, ship.rect.x, ship.rect.y,
+                                            pygame.image.load('images/ship_death_3.png'))
+            ship_exploding_3.draw_picture()
+            pygame.display.flip()
+            sleep(0.1)
+
+            ship_exploding_4 = Picture(ai_settings, screen, ship.rect.x, ship.rect.y,
+                                            pygame.image.load('images/ship_death_4.png'))
+            ship_exploding_4.draw_picture()
+            pygame.display.flip()
+            sleep(0.1)
+
+            ship_exploding_5 = Picture(ai_settings, screen, ship.rect.x, ship.rect.y,
+                                            pygame.image.load('images/ship_death_5.png'))
+            ship_exploding_5.draw_picture()
+            pygame.display.flip()
+            sleep(0.1)
+
+            ship_exploding_6 = Picture(ai_settings, screen, ship.rect.x, ship.rect.y,
+                                            pygame.image.load('images/ship_death_6.png'))
+            ship_exploding_6.draw_picture()
+            pygame.display.flip()
+            sleep(0.1)
+
+            ship_exploding_7 = Picture(ai_settings, screen, ship.rect.x, ship.rect.y,
+                                            pygame.image.load('images/ship_death_7.png'))
+            ship_exploding_7.draw_picture()
+            pygame.display.flip()
+            sleep(0.1)
+
+            ship_exploding_8 = Picture(ai_settings, screen, ship.rect.x, ship.rect.y,
+                                            pygame.image.load('images/ship_death_8.png'))
+            ship_exploding_8.draw_picture()
+            pygame.display.flip()
+            sleep(0.1)
+
+            ship_exploding_9 = Picture(ai_settings, screen, ship.rect.x, ship.rect.y,
+                                            pygame.image.load('images/ship_death_9.png'))
+            ship_exploding_9.draw_picture()
+            pygame.display.flip()
+            sleep(0.1)
+
+            list1[8] = False
+
     if animation_clock <= 0:
         list1[0] = False
+        list1[2] = False
+        list1[4] = False
+        list1[6] = False
         animation_clock = ai_settings.animation_clock
+
+    aliens.draw(screen)
 
     # Draw the score information.
     sb.show_score()
