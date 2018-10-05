@@ -73,6 +73,12 @@ def run_game():
     while True:
         highscoreText = Text(ai_settings, screen, "HIGH SCORE: " + str(stats.high_score), 200, 40, ai_settings.screen_width / 2 - 100, 40, (255, 255, 255))
         menu_loop = True
+        pygame.mixer.quit()
+        pygame.mixer.init(frequency)
+        pygame.mixer.music.load('audio/OST.mp3')
+        pygame.mixer.music.play(-1)
+        pygame
+
    
         while menu_loop:
             menu_loop = gf.check_menu_events(ai_settings, screen, stats, sb, play_button, ship, aliens, bullets, highscore_button, back_button, highscoreText, bullets2)
@@ -84,7 +90,7 @@ def run_game():
             if stats.game_active:
                 ship.update()
                 gf.update_barriers(ai_settings, screen, barriers, aliens, ship)
-                temp = gf.update_bullets(ai_settings, screen, stats, sb, ship, aliens, bullets, bullets2, ufo)
+                temp = gf.update_bullets(ai_settings, screen, stats, sb, ship, aliens, bullets, bullets2, ufo, barriers)
                 if temp is not None:
                     list = temp
                 gf.update_aliens(ai_settings, stats, screen, sb, ship, aliens, bullets, bullets2, ufo)

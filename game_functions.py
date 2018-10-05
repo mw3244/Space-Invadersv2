@@ -2,6 +2,7 @@ import sys
 import pygame
 import random
 import math
+from PIL import Image
 from time import sleep
 from bullet import Bullet
 from bullet import Bullet2
@@ -120,7 +121,7 @@ def check_keyup_events(event, ship):
     if event.key == pygame.K_LEFT:
         ship.moving_left = False
 
-def update_bullets(ai_settings, screen, stats, sb, ship, aliens, bullets, bullets2, ufo):
+def update_bullets(ai_settings, screen, stats, sb, ship, aliens, bullets, bullets2, ufo, barriers):
     """Update position of bullets and get rid of old bullets."""
     # Update bullet positions.
     bullets.update()
@@ -138,12 +139,12 @@ def update_bullets(ai_settings, screen, stats, sb, ship, aliens, bullets, bullet
         if bullet2.rect.colliderect(ship.rect):
             ship_exploding = ship_hit(ai_settings, stats, screen, sb, ship, aliens, bullets, bullets2, ufo)
 
-    list = check_bullet_alien_collisions(ai_settings, screen, stats, sb, ship, aliens, bullets, bullets2, ufo)
+    list = check_bullet_alien_collisions(ai_settings, screen, stats, sb, ship, aliens, bullets, bullets2, ufo, barriers)
     list.append(ship_exploding)
     if list[0] == True or list[2] == True or list[4] == True or list[6] == True or list[8] == True:
         return list
 
-def check_bullet_alien_collisions(ai_settings, screen, stats, sb, ship, aliens, bullets, bullets2, ufo):
+def check_bullet_alien_collisions(ai_settings, screen, stats, sb, ship, aliens, bullets, bullets2, ufo, barriers):
     """Respond to bullet-alien collisions."""
     # Remove any bullets and aliens that have collided.
 
@@ -195,6 +196,23 @@ def check_bullet_alien_collisions(ai_settings, screen, stats, sb, ship, aliens, 
 
     check_high_score(stats, sb)
     collisions = pygame.sprite.groupcollide(bullets, aliens, True, True)
+
+    for bullet2 in bullets2:
+        for barrier in barriers:
+            if bullet2.rect.colliderect(barrier):
+                bullets2.remove(bullet2)
+                img = Image.open("images/barrier.bmp")
+                pixels = img.load()
+                for i in range (img.size[0]):
+                    for j in range(img.size[1]):
+                        pixels[i,j] = (i, j, 100)
+                img.save('images/barrier2.bmp')
+                barrier.image = pygame.image.load('images/barrier2.bmp')
+
+    #barriercollision = pygame.sprite.groupcollide(barriers, bullets2, False, False)
+    #if barriercollision:
+        #for bullets2 in barriercollision.values():
+            #bullets2.remove(bullets2)
 
 
     if len(aliens) == 0:
@@ -393,6 +411,7 @@ def update_screen(ai_settings, screen, stats, sb, ship, aliens, bullets, play_bu
             list1[7].draw_picture()
             animation_clock -= 1
 
+    # list1[8] is a bool for the ship exploding
     if isinstance(list1, list):
         if list1[8] == True:
             ship_exploding_1 = Picture(ai_settings, screen, ship.rect.x, ship.rect.y,
