@@ -197,19 +197,19 @@ def check_bullet_alien_collisions(ai_settings, screen, stats, sb, ship, aliens, 
     check_high_score(stats, sb)
     collisions = pygame.sprite.groupcollide(bullets, aliens, True, True)
 
-    for bullet2 in bullets2:
-        for barrier in barriers:
-            if bullet2.rect.colliderect(barrier):
-                bullets2.remove(bullet2)
-                img = Image.open("images/barrier.bmp")
-                pixels = img.load()
-                for i in range (img.size[0]):
-                    for j in range(img.size[1]):
-                        pixels[i,j] = (i, j, 100)
-                img.save('images/barrier2.bmp')
-                barrier.image = pygame.image.load('images/barrier2.bmp')
+    #for bullet2 in bullets2:
+        #for barrier in barriers:
+            #if bullet2.rect.colliderect(barrier):
+                #bullets2.remove(bullet2)
+                #img = Image.open("images/barrier.bmp")
+                #pixels = img.load()
+                #for i in range (img.size[0]):
+                    #for j in range(img.size[1]):
+                        #pixels[i,j] = (i, j, 100)
+                #img.save('images/barrier2.bmp')
+               # barrier.image = pygame.image.load('images/barrier2.bmp')
 
-    #barriercollision = pygame.sprite.groupcollide(barriers, bullets2, False, False)
+    barriercollision = pygame.sprite.groupcollide(barriers, bullets2, False, True)
     #if barriercollision:
         #for bullets2 in barriercollision.values():
             #bullets2.remove(bullets2)
